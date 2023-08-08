@@ -18,6 +18,10 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
+#zig
+zig-cache
+zig-out
+
 #project linux
 src/blobby
 src/blobby-server
