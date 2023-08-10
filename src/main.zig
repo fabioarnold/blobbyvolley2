@@ -1,4 +1,5 @@
 const std = @import("std");
+const logger = std.log.scoped(.main);
 
 const nvg = @import("nanovg");
 
@@ -10,9 +11,15 @@ pub const std_options = struct {
 const gl = @import("web/webgl.zig");
 const keys = @import("web/keys.zig");
 
+const DuelMatchState = @import("DuelMatchState.zig");
+const Renderer = @import("Renderer.zig");
+
 var video_width: f32 = 1280;
 var video_height: f32 = 720;
 var video_scale: f32 = 1;
+
+const game_width = 800;
+const game_height = 600;
 
 var global_arena: std.heap.ArenaAllocator = undefined;
 var gpa: std.heap.GeneralPurposeAllocator(.{
@@ -20,16 +27,11 @@ var gpa: std.heap.GeneralPurposeAllocator(.{
 }) = undefined;
 var allocator: std.mem.Allocator = undefined;
 
-var vg: nvg = undefined;
-
 var prevt: f32 = 0;
 var mx: f32 = 0;
 var my: f32 = 0;
-var blowup: bool = false;
-var screenshot: bool = false;
-var premult: bool = false;
 
-const logger = std.log.scoped(.main);
+var game_state: DuelMatchState = undefined;
 
 export fn onInit() void {
     global_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -40,10 +42,13 @@ export fn onInit() void {
 
     wasm.global_allocator = allocator;
 
-    vg = nvg.gl.init(allocator, .{}) catch {
-        logger.err("Failed to create NanoVG", .{});
+    Renderer.init(allocator) catch {
+        logger.err("Failed to init Renderer", .{});
         return;
     };
+
+    Renderer.load();
+    game_state.world_state.reset();
 }
 
 export fn onResize(w: c_uint, h: c_uint, s: f32) void {
@@ -54,9 +59,7 @@ export fn onResize(w: c_uint, h: c_uint, s: f32) void {
 }
 
 export fn onKeyDown(key: c_uint) void {
-    if (key == keys.KEY_SPACE) blowup = !blowup;
-    if (key == keys.KEY_S) screenshot = true;
-    if (key == keys.KEY_P) premult = !premult;
+    _ = key;
 }
 
 export fn onMouseMove(x: i32, y: i32) void {
@@ -64,28 +67,33 @@ export fn onMouseMove(x: i32, y: i32) void {
     my = @floatFromInt(y);
 }
 
+fn scaleToFit() void {
+    const vg = Renderer.vg;
+    const sx = video_width / game_width;
+    const sy = video_height / game_height;
+    if (sx < sy) {
+        vg.translate(0, 0.5 * (video_height - sx * game_height));
+        vg.scale(sx, sx);
+    } else {
+        vg.translate(0.5 * (video_width - sy * game_width), 0);
+        vg.scale(sy, sy);
+    }
+}
+
 export fn onAnimationFrame() void {
     const t = wasm.performanceNow() / 1000.0;
     const dt = t - prevt;
     prevt = t;
 
-    if (premult) {
-        gl.glClearColor(0, 0, 0, 0);
-    } else {
-        gl.glClearColor(0.3, 0.3, 0.32, 1.0);
-    }
+    gl.glClearColor(0, 0, 0, 0);
     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
 
+    const vg = Renderer.vg;
     vg.beginFrame(video_width, video_height, video_scale);
+    scaleToFit();
 
-    // something
-    _ = dt;
-
-    vg.beginPath();
-    vg.moveTo(100, 100);
-    vg.lineTo(100, 200);
-    vg.lineTo(200, 200);
-    vg.fill();
+    game_state.world_state.update(dt);
+    Renderer.drawGame(game_state);
 
     vg.endFrame();
 }

@@ -195,6 +195,7 @@ pub fn build(b: *std.build.Builder) void {
         .target = wasm_target,
         .optimize = optimize,
         .root_source_file = .{ .path = "src/main.zig" },
+        .main_pkg_path = .{ .path = "." },
     });
     blobby_zig.addModule("nanovg", nanovg);
     blobby_zig.linkLibrary(nanovg_dep.artifact("nanovg"));
