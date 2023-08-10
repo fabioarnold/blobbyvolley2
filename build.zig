@@ -120,7 +120,7 @@ pub fn build(b: *std.build.Builder) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const cpp_flags = [_][]const u8{"-std=c++11", "-DTARGET_OS_IPHONE=0", "-DTARGET_OS_SIMULATOR=0"};
+    const cpp_flags = [_][]const u8{ "-std=c++11", "-DTARGET_OS_IPHONE=0", "-DTARGET_OS_SIMULATOR=0" };
     const c_flags = [_][]const u8{};
 
     const tinyxml = b.addStaticLibrary(.{
@@ -185,4 +185,19 @@ pub fn build(b: *std.build.Builder) void {
     run_cmd.step.dependOn(b.getInstallStep());
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
+
+    const wasm_target = std.zig.CrossTarget{ .cpu_arch = .wasm32, .os_tag = .freestanding };
+    const nanovg_dep = b.dependency("nanovg", .{ .target = wasm_target, .optimize = optimize });
+    const nanovg = nanovg_dep.module("nanovg");
+
+    const blobby_zig = b.addSharedLibrary(.{
+        .name = "blobby",
+        .target = wasm_target,
+        .optimize = optimize,
+        .root_source_file = .{ .path = "src/main.zig" },
+    });
+    blobby_zig.addModule("nanovg", nanovg);
+    blobby_zig.linkLibrary(nanovg_dep.artifact("nanovg"));
+    blobby_zig.rdynamic = true;
+    b.installArtifact(blobby_zig);
 }

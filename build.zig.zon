@@ -1,0 +1,10 @@
+.{
+    .name = "Blobby Volley",
+    .version = "3.0.0",
+    .dependencies = .{
+        .nanovg = .{
+            .url = "https://github.com/fabioarnold/nanovg-zig/archive/dcf3bc9a2813d787ab546b564e2d0d0685ac819e.tar.gz",
+            .hash = "12201ee00a0331b39cadc31e4869d8bf45575a256a4e9f0401abc0f3a60001453b5e",
+        },
+    }
+}
