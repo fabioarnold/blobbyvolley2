@@ -8,7 +8,12 @@
             "type": "shell",
             "command": "zig build",
             "group": "build",
-            "problemMatcher": "$zig"
+            "problemMatcher": "$zig",
+            "presentation": {
+                "clear": true,
+                "reveal": "silent",
+                "showReuseMessage": false,
+            }
         }
     ]
 }
