@@ -24,10 +24,15 @@
   <script src="js/wasm.js"></script>
   <script src="js/webgl.js"></script>
   <script>
+    keys = [];
+    const isKeyDown = function(key) {
+      return keys[key];
+    }
 
     const env = {
       ...wasm,
       ...webgl,
+      isKeyDown,
     }
 
     fetchAndInstantiate('zig-out/lib/blobby.wasm', { env }).then(instance => {
@@ -46,8 +51,14 @@
 
       const onAnimationFrame = instance.exports.onAnimationFrame;
 
-      document.addEventListener('keydown', e => instance.exports.onKeyDown(e.keyCode));
-      // document.addEventListener('keyup', e => instance.exports.onKeyUp(e.keyCode, 0));
+      document.addEventListener('keydown', e => {
+        keys[e.keyCode] = true;
+        instance.exports.onKeyDown(e.keyCode)
+      });
+      document.addEventListener('keyup', e => {
+        keys[e.keyCode] = false;
+        // instance.exports.onKeyUp(e.keyCode);
+      });
       // document.addEventListener('mousedown', e => instance.exports.onMouseDown(e.button, e.x, e.y));
       // document.addEventListener('mouseup', e => instance.exports.onMouseUp(e.button, e.x, e.y));
       document.addEventListener('mousemove', e => instance.exports.onMouseMove(e.x, e.y));

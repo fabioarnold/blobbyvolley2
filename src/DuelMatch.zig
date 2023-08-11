@@ -1,3 +1,4 @@
+const keys = @import("web/keys.zig");
 const constants = @import("constants.zig");
 const config = @import("config.zig");
 const PhysicWorld = @import("PhysicWorld.zig");
@@ -17,6 +18,12 @@ paused: bool,
 pub fn init(self: *Self) void {
     self.physic_world.init();
     self.logic.init(config.score_to_win);
+    self.input_sources[0] = InputSource{
+        .left_key = keys.KEY_A,
+        .right_key = keys.KEY_D,
+        .up_key = keys.KEY_W,
+    };
+    self.input_sources[1] = InputSource{};
     self.paused = false;
 }
 

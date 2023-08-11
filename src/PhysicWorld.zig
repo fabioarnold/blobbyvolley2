@@ -138,6 +138,7 @@ fn handleBlob(self: *Self, player: PlayerSide, input: PlayerInput) void {
         self.blobbyStartAnimation(player);
     }
 
+    self.blob_velocity[player_index].x = 0;
     if (input.right)
         self.blob_velocity[player_index].x += constants.blobby_speed;
     if (input.left)

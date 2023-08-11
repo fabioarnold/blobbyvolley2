@@ -1,3 +1,5 @@
+pub extern fn isKeyDown(key: u32) bool;
+
 pub const KEY_BACKSPACE = 8;
 pub const KEY_TAB = 9;
 pub const KEY_ENTER = 13;
