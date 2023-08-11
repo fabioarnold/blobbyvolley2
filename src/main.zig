@@ -11,7 +11,7 @@ pub const std_options = struct {
 const gl = @import("web/webgl.zig");
 const keys = @import("web/keys.zig");
 
-const DuelMatchState = @import("DuelMatchState.zig");
+const LocalGameState = @import("state/LocalGameState.zig");
 const Renderer = @import("Renderer.zig");
 
 var video_width: f32 = 1280;
@@ -31,7 +31,7 @@ var prevt: f32 = 0;
 var mx: f32 = 0;
 var my: f32 = 0;
 
-var game_state: DuelMatchState = undefined;
+var game_state: LocalGameState = undefined;
 
 export fn onInit() void {
     global_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -48,7 +48,7 @@ export fn onInit() void {
     };
 
     Renderer.load();
-    game_state.world_state.reset();
+    game_state.init();
 }
 
 export fn onResize(w: c_uint, h: c_uint, s: f32) void {
@@ -92,8 +92,8 @@ export fn onAnimationFrame() void {
     vg.beginFrame(video_width, video_height, video_scale);
     scaleToFit();
 
-    game_state.world_state.update(dt);
-    Renderer.drawGame(game_state);
+    _ = dt;
+    game_state.step();
 
     vg.endFrame();
 }

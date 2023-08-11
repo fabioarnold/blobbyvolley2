@@ -1,0 +1,1 @@
+pub var score_to_win: u32 = 15;

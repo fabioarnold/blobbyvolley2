@@ -1,13 +1,13 @@
 const constants = @import("constants.zig");
 const PlayerSide = constants.PlayerSide;
 const Vec2 = @import("Vec2.zig");
-const PhysicWorld = @import("PhysicWorld.zig");
+const PhysicState = @import("PhysicState.zig");
 const GameLogicState = @import("GameLogicState.zig");
 const PlayerInput = @import("PlayerInput.zig");
 
 const Self = @This();
 
-world_state: PhysicWorld,
+world_state: PhysicState,
 logic_state: GameLogicState,
 player_input: [constants.max_players]PlayerInput,
 
