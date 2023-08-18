@@ -17,7 +17,7 @@ paused: bool,
 
 pub fn init(self: *Self) void {
     self.physic_world.init();
-    self.logic.init(config.score_to_win);
+    self.logic.init(@embedFile("../data/rules/default.lua"), config.score_to_win);
     self.input_sources[0] = InputSource{
         .left_key = keys.KEY_A,
         .right_key = keys.KEY_D,

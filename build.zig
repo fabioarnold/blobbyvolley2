@@ -186,9 +186,16 @@ pub fn build(b: *std.build.Builder) void {
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 
-    const wasm_target = std.zig.CrossTarget{ .cpu_arch = .wasm32, .os_tag = .freestanding };
-    const nanovg_dep = b.dependency("nanovg", .{ .target = wasm_target, .optimize = optimize });
-    const nanovg = nanovg_dep.module("nanovg");
+    // TODO: This is a hack to get the SDL2 headers and libraries to be found on macOS.
+    blobby.addIncludePath(.{ .path = "/opt/homebrew/include" });
+    blobby.addIncludePath(.{ .path = "/opt/homebrew/include/SDL2" });
+    blobby.addLibraryPath(.{ .path = "/opt/homebrew/lib" });
+    blobby_server.addIncludePath(.{ .path = "/opt/homebrew/include" });
+    blobby_server.addIncludePath(.{ .path = "/opt/homebrew/include/SDL2" });
+    blobby_server.addLibraryPath(.{ .path = "/opt/homebrew/lib" });
+
+    const wasm_target = std.zig.CrossTarget{ .cpu_arch = .wasm32, .os_tag = .freestanding, .abi = .musl };
+    const nanovg = b.dependency("nanovg", .{ .target = wasm_target, .optimize = optimize });
 
     const blobby_zig = b.addSharedLibrary(.{
         .name = "blobby",
@@ -197,8 +204,11 @@ pub fn build(b: *std.build.Builder) void {
         .root_source_file = .{ .path = "src/main.zig" },
         .main_pkg_path = .{ .path = "." },
     });
-    blobby_zig.addModule("nanovg", nanovg);
-    blobby_zig.linkLibrary(nanovg_dep.artifact("nanovg"));
+    blobby_zig.addModule("nanovg", nanovg.module("nanovg"));
+    blobby_zig.linkLibrary(nanovg.artifact("nanovg"));
+    blobby_zig.addIncludePath(.{ .path = "deps/lua" });
+    blobby_zig.addCSourceFiles(&lua_src, &.{"-std=gnu99"});
     blobby_zig.rdynamic = true;
+    blobby_zig.disable_sanitize_c = true; // UB in LUA
     b.installArtifact(blobby_zig);
 }

@@ -7,7 +7,15 @@ pub const PlayerSide = enum(u1) {
     pub fn index(player_side: PlayerSide) usize {
         return @intFromEnum(player_side);
     }
+
+    pub fn other(player_side: PlayerSide) PlayerSide {
+        return switch (player_side) {
+            .left => .right,
+            .right => .left,
+        };
+    }
 };
+pub const player_none = -1;
 pub const player_left = PlayerSide.left.index();
 pub const player_right = PlayerSide.right.index();
 

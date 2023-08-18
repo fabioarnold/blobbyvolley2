@@ -6,6 +6,10 @@ const performanceNow = () => {
     return performance.now();
 }
 
+const dateNow = () => {
+    return Date.now();
+}
+
 const readCharStr = (ptr, len) => {
     const array = new Uint8Array(memory.buffer, ptr, len)
     const decoder = new TextDecoder()
@@ -46,6 +50,7 @@ var wasm = {
     wasm_log_write,
     wasm_log_flush,
     performanceNow,
+    dateNow,
     download,
     readCharStr,
     fmodf: (x, y) => x % y,
@@ -58,5 +63,5 @@ var wasm = {
     expf: Math.exp,
     pow: Math.pow,
     ceil: Math.ceil,
-    ldexp: (x, exp) => x * Math.pow(2, exp)
+    ldexp: (x, exp) => x * Math.pow(2, exp),
 }
