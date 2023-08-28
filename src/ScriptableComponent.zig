@@ -1,9 +1,13 @@
 const c = @import("c.zig");
 const constants = @import("constants.zig");
+const Vec2 = @import("Vec2.zig");
+const DuelMatchState = @import("DuelMatchState.zig");
 
 const Self = @This();
 
 state: *c.lua_State,
+
+cached_state: DuelMatchState,
 
 pub fn init(self: *Self) void {
     self.state = c.luaL_newstate().?;
@@ -44,9 +48,8 @@ pub fn setGameConstants(self: Self) void {
     self.setLuaGlobal("RIGHT_PLAYER", constants.player_right);
 }
 
-pub fn setGameFunctions(self: Self) void {
-    _ = self;
-    // c.lua_register(self.state, "get_ball_pos", get_ball_pos);
+pub fn setGameFunctions(self: *Self) void {
+    c.lua_register(self.state, "get_ball_pos", get_ball_pos);
     // c.lua_register(self.state, "get_ball_vel", get_ball_vel);
     // c.lua_register(self.state, "get_blob_pos", get_blob_pos);
     // c.lua_register(self.state, "get_blob_vel", get_blob_vel);
@@ -64,17 +67,49 @@ fn setLuaGlobal(self: Self, name: []const u8, value: f64) void {
     c.lua_setglobal(self.state, name.ptr);
 }
 
-// inline const DuelMatchState getMatchState( lua_State* state )  {
-// 	auto sc = getScriptComponent( state );
-// 	return sc->getMatchState();
-// }
+pub fn getLuaFunction(self: Self, name: []const u8) bool {
+    _ = c.lua_getglobal(self.state, name.ptr);
+    if (!c.lua_isfunction(self.state, -1)) {
+        c.lua_pop(self.state, 1);
+        return false;
+    }
+    return true;
+}
+
+fn getScriptComponent(state: ?*c.lua_State) *Self {
+    _ = c.lua_pushliteral(state, "__C++_ScriptComponent__");
+    _ = c.lua_gettable(state, c.LUA_REGISTRYINDEX);
+    const result = c.lua_touserdata(state, -1);
+    c.lua_pop(state, 1);
+    return @alignCast(@ptrCast(result));
+}
+
+fn getMatchState(state: ?*c.lua_State) *DuelMatchState {
+    const sc = getScriptComponent(state);
+    return &sc.cached_state;
+}
 // inline PhysicWorld* getWorld( lua_State* s )  { return IScriptableComponent::Access::getWorld(s); }
 
-// // standard lua functions
-// int get_ball_pos(lua_State* state)
-// {
-// 	return lua_pushvector(state, getMatchState(state).getBallPosition(), VectorType::POSITION);
-// }
+const VectorType = enum {
+    position,
+    velocity,
+};
+
+fn lua_pushvector(state: ?*c.lua_State, v: Vec2, vector_type: VectorType) c_int {
+    if (vector_type == .position) {
+        c.lua_pushnumber(state, v.x);
+        c.lua_pushnumber(state, -v.y);
+    } else if (vector_type == .velocity) {
+        c.lua_pushnumber(state, v.x);
+        c.lua_pushnumber(state, 600 - v.y);
+    }
+    return 2;
+}
+
+// standard lua functions
+fn get_ball_pos(state: ?*c.lua_State) callconv(.C) c_int {
+    return lua_pushvector(state, getMatchState(state).getBallPosition(), .position);
+}
 
 // int get_ball_vel(lua_State* state)
 // {

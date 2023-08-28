@@ -48,7 +48,7 @@ export fn onInit() void {
     };
 
     Renderer.load();
-    game_state.init();
+    game_state.init(allocator);
 }
 
 export fn onResize(w: c_uint, h: c_uint, s: f32) void {
@@ -84,9 +84,6 @@ export fn onAnimationFrame() void {
     const t = wasm.performanceNow() / 1000.0;
     const dt = t - prevt;
     prevt = t;
-
-    gl.glClearColor(0, 0, 0, 0);
-    gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
 
     const vg = Renderer.vg;
     vg.beginFrame(video_width, video_height, video_scale);

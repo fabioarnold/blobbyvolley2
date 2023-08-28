@@ -4,6 +4,10 @@ const PlayerSide = constants.PlayerSide;
 const Vec2 = @import("Vec2.zig");
 const PlayerInput = @import("PlayerInput.zig");
 const PhysicState = @import("PhysicState.zig");
+const DuelMatch = @import("DuelMatch.zig");
+const MatchEvent = @import("MatchEvent.zig");
+
+const logger = std.log.scoped(.PhysicWorld);
 
 const Self = @This();
 
@@ -17,15 +21,44 @@ ball_velocity: Vec2,
 ball_rotation: f32 = 0,
 ball_angular_velocity: f32 = constants.standard_ball_angular_velocity,
 
-pub fn init(self: *Self) void {
-    self.blob_position[0] = .{ .x = 200, .y = constants.ground_plane_height };
-    self.blob_position[1] = .{ .x = 600, .y = constants.ground_plane_height };
-    self.blob_state[0] = 0;
-    self.blob_state[1] = 0;
+event_callback_context: *DuelMatch,
+event_callback: *const fn (*DuelMatch, MatchEvent) void,
 
-    self.ball_position = .{ .x = 200, .y = constants.standard_ball_height };
-    self.ball_rotation = 0;
-    self.ball_angular_velocity = constants.standard_ball_angular_velocity;
+pub fn init(self: *Self) void {
+    self.* = .{
+        .blob_position = .{
+            .{ .x = 200, .y = constants.ground_plane_height },
+            .{ .x = 600, .y = constants.ground_plane_height },
+        },
+        .blob_velocity = .{
+            .{ .x = 0, .y = 0 },
+            .{ .x = 0, .y = 0 },
+        },
+        .blob_state = .{ 0, 0 },
+        .current_blobby_animation_speed = .{ 0, 0 },
+
+        .ball_position = .{ .x = 200, .y = constants.standard_ball_height },
+        .ball_velocity = .{ .x = 0, .y = 0 },
+        .ball_rotation = 0,
+        .ball_angular_velocity = constants.standard_ball_angular_velocity,
+
+        .event_callback_context = undefined,
+        .event_callback = dummyEventCallback,
+    };
+}
+
+pub fn setEventCallback(self: *Self, context: *DuelMatch, callback: *const fn (*DuelMatch, MatchEvent) void) void {
+    self.event_callback_context = context;
+    self.event_callback = callback;
+}
+
+fn dummyEventCallback(self: *DuelMatch, event: MatchEvent) void {
+    _ = event;
+    _ = self;
+}
+
+fn emitEvent(self: *Self, event: MatchEvent) void {
+    self.event_callback(self.event_callback_context, event);
 }
 
 pub fn step(self: *Self, left_input: PlayerInput, right_input: PlayerInput, is_ball_valid: bool, is_game_running: bool) void {
@@ -179,7 +212,9 @@ fn handleBlobbyBallCollision(self: *Self, player: PlayerSide) bool {
     // ok, if we get here, there actually was a collision
 
     // calculate hit intensity
-    // const intensity = @min(1.f, Vector2(self.ball_velocity, mBlobVelocity[player_index]).length() / 25.0);
+    var diff = self.ball_velocity;
+    diff.subtract(self.blob_velocity[player.index()]);
+    const intensity = @min(1.0, diff.length() / 25.0);
 
     // set ball velocity
     self.ball_velocity.x = self.ball_position.x - collision_center.x;
@@ -189,7 +224,7 @@ fn handleBlobbyBallCollision(self: *Self, player: PlayerSide) bool {
     self.ball_position.x += self.ball_velocity.x;
     self.ball_position.y += self.ball_velocity.y;
 
-    // mCallback( MatchEvent{MatchEvent::BALL_HIT_BLOB, player, intensity} );
+    self.emitEvent(MatchEvent.init(.ball_hit_blob, player, intensity));
 
     return true;
 }
@@ -200,7 +235,8 @@ fn handleBallWorldCollisions(self: *Self) void {
         self.ball_velocity.y = -self.ball_velocity.y;
         self.ball_velocity.scaleScalar(0.95);
         self.ball_position.y = constants.ground_plane_height_max - constants.ball_radius;
-        // mCallback( MatchEvent{MatchEvent::BALL_HIT_GROUND, self.ball_position.x > NET_POSITION_X ? RIGHT_PLAYER : LEFT_PLAYER, 0} );
+        const player: PlayerSide = if (self.ball_position.x > constants.net_position_x) .right else .left;
+        self.emitEvent(MatchEvent.init(.ball_hit_ground, player, 0));
     }
 
     // Border Collision
@@ -208,24 +244,25 @@ fn handleBallWorldCollisions(self: *Self) void {
         self.ball_velocity.x = -self.ball_velocity.x;
         // set the ball's position
         self.ball_position.x = constants.left_plane + constants.ball_radius;
-        // mCallback( MatchEvent{MatchEvent::BALL_HIT_WALL, LEFT_PLAYER, 0} );
+        self.emitEvent(MatchEvent.init(.ball_hit_wall, .left, 0));
     } else if (self.ball_position.x + constants.ball_radius >= constants.right_plane and self.ball_velocity.x > 0) {
         self.ball_velocity.x = -self.ball_velocity.x;
         // set the ball's position
         self.ball_position.x = constants.right_plane - constants.ball_radius;
-        // mCallback( MatchEvent{MatchEvent::BALL_HIT_WALL, RIGHT_PLAYER, 0} );
+        self.emitEvent(MatchEvent.init(.ball_hit_wall, .right, 0));
     } else if (self.ball_position.y > constants.net_sphere_position and
         @fabs(self.ball_position.x - constants.net_position_x) < constants.ball_radius + constants.net_radius)
     {
         self.ball_velocity.x = -self.ball_velocity.x;
         // set the ball's position so that it touches the net
-        if (self.ball_position.x > constants.net_position_x) {
+        const right = self.ball_position.x > constants.net_position_x;
+        if (right) {
             self.ball_position.x = constants.net_position_x + constants.ball_radius + constants.net_radius;
         } else {
             self.ball_position.x = constants.net_position_x - constants.ball_radius - constants.net_radius;
         }
 
-        // mCallback( MatchEvent{MatchEvent::BALL_HIT_NET, right ? RIGHT_PLAYER : LEFT_PLAYER, 0} );
+        self.emitEvent(MatchEvent.init(.ball_hit_net, if (right) .right else .left, 0));
     } else {
         // Net Collisions
         const net_position = .{ .x = constants.net_position_x, .y = constants.net_sphere_position };
@@ -259,12 +296,12 @@ fn handleBallWorldCollisions(self: *Self) void {
             self.ball_position.x -= normal.x * (constants.net_radius + constants.ball_radius);
             self.ball_position.y -= normal.y * (constants.net_radius + constants.ball_radius);
 
-            // mCallback( MatchEvent{MatchEvent::BALL_HIT_NET_TOP, NO_PLAYER, 0} );
+            self.emitEvent(MatchEvent.init(.ball_hit_net_top, undefined, 0));
         }
     }
 }
 
-fn blobHitGround(self: Self, player: PlayerSide) bool {
+pub fn blobHitGround(self: Self, player: PlayerSide) bool {
     return self.blob_position[player.index()].y >= constants.ground_plane_height;
 }
 

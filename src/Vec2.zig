@@ -3,6 +3,16 @@ const Self = @This();
 x: f32,
 y: f32,
 
+pub fn add(self: *Self, v: Self) void {
+    self.x += v.x;
+    self.y += v.y;
+}
+
+pub fn subtract(self: *Self, v: Self) void {
+    self.x -= v.x;
+    self.y -= v.y;
+}
+
 pub fn scale(self: *Self, sx: f32, sy: f32) void {
     self.x *= sx;
     self.y *= sy;

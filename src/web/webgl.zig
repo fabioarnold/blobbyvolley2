@@ -122,6 +122,7 @@ pub const GL_TEXTURE0 = 0x84C0;
 // OpenGL 1.4
 pub const GL_ARRAY_BUFFER = 0x8892;
 pub const GL_STREAM_DRAW = 0x88E0;
+pub const GL_STATIC_DRAW = 0x88E4;
 pub const GL_INCR_WRAP = 0x8507;
 pub const GL_DECR_WRAP = 0x8508;
 
@@ -201,6 +202,7 @@ pub extern fn glGetProgramInfoLog(program: GLuint, bufSize: GLsizei, length: [*c
 pub extern fn glGetShaderiv(shader: GLuint, pname: GLenum, params: [*c]GLint) void;
 pub extern fn glGetShaderInfoLog(shader: GLuint, bufSize: GLsizei, length: [*c]GLsizei, infoLog: [*c]GLchar) void;
 pub extern fn glLinkProgram(program: GLuint) void;
+pub extern fn glLinkShaderProgram(vert_shader: GLuint, frag_shader: GLuint) GLuint;
 pub extern fn glShaderSource(shader: GLuint, count: GLsizei, [*c]const [*c]const GLchar, length: [*c]const GLint) void;
 extern fn jsGetUniformLocation(program: GLuint, name: [*c]const GLchar, nameLen: usize) GLint;
 pub fn glGetUniformLocation(program: GLuint, name: [*c]const GLchar) GLint {
@@ -208,6 +210,8 @@ pub fn glGetUniformLocation(program: GLuint, name: [*c]const GLchar) GLint {
 }
 pub extern fn glUseProgram(program: GLuint) void;
 pub extern fn glUniform1i(location: GLint, v0: GLint) void;
+pub extern fn glUniform1f(location: GLint, x: GLfloat) void;
+pub extern fn glUniform2f(location: GLint, x: GLfloat, y: GLfloat) void;
 pub extern fn glUniform2fv(location: GLint, count: GLsizei, value: [*c]const GLfloat) void;
 pub extern fn glUniform4fv(location: GLint, count: GLsizei, value: [*c]const GLfloat) void;
 pub extern fn glVertexAttribPointer(index: GLuint, size: GLint, @"type": GLenum, normalized: GLboolean, stride: GLsizei, pointer: ?*const anyopaque) void;
