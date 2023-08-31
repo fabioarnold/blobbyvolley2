@@ -13,6 +13,7 @@ const keys = @import("web/keys.zig");
 
 const LocalGameState = @import("state/LocalGameState.zig");
 const Renderer = @import("Renderer.zig");
+const imgui = @import("imgui.zig");
 
 var video_width: f32 = 1280;
 var video_height: f32 = 720;
@@ -48,6 +49,7 @@ export fn onInit() void {
     };
 
     Renderer.load();
+    imgui.init(allocator);
     game_state.init(allocator);
 }
 
@@ -89,8 +91,14 @@ export fn onAnimationFrame() void {
     vg.beginFrame(video_width, video_height, video_scale);
     scaleToFit();
 
+    imgui.begin();
+
+    imgui.label("Blobby Volley 3", 260, 60);
+
     _ = dt;
     game_state.step();
+
+    imgui.end();
 
     vg.endFrame();
 }
