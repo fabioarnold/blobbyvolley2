@@ -22,3 +22,7 @@ pub fn getBallRotation(self: Self) f32 {
 pub fn getBlobPosition(self: Self, player: PlayerSide) Vec2 {
     return self.world_state.blob_position[@intFromEnum(player)];
 }
+
+pub fn getHitcount(self: Self, player: PlayerSide) u32 {
+    return self.logic_state.hit_count[player.index()];
+}

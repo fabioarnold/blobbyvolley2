@@ -1,5 +1,9 @@
+const std = @import("std");
+const logger = std.log.scoped(.ScriptableComponent);
+
 const c = @import("c.zig");
 const constants = @import("constants.zig");
+const PlayerSide = constants.PlayerSide;
 const Vec2 = @import("Vec2.zig");
 const DuelMatchState = @import("DuelMatchState.zig");
 
@@ -54,7 +58,7 @@ pub fn setGameFunctions(self: *Self) void {
     // c.lua_register(self.state, "get_blob_pos", get_blob_pos);
     // c.lua_register(self.state, "get_blob_vel", get_blob_vel);
     // c.lua_register(self.state, "get_score", get_score);
-    // c.lua_register(self.state, "get_touches", get_touches);
+    c.lua_register(self.state, "get_touches", get_touches);
     // c.lua_register(self.state, "is_ball_valid", get_ball_valid);
     // c.lua_register(self.state, "is_game_running", get_game_running);
     // c.lua_register(self.state, "get_serving_player", get_serving_player);
@@ -144,15 +148,14 @@ fn get_ball_pos(state: ?*c.lua_State) callconv(.C) c_int {
 // 	return 1;
 // }
 
-// int get_touches( lua_State* state )
-// {
-// 	const auto& s = getMatchState(state);
-// 	PlayerSide side = (PlayerSide) lua_to_int( state, -1 );
-// 	lua_pop(state, 1);
-// 	assert( side == LEFT_PLAYER || side == RIGHT_PLAYER );
-// 	lua_pushinteger(state, s.getHitcount(side));
-// 	return 1;
-// }
+fn get_touches(state: ?*c.lua_State) callconv(.C) c_int {
+    const s = getMatchState(state);
+    const side: PlayerSide = @enumFromInt(c.lua_to_int(state, -1));
+    logger.info("get_touches: {}", .{side});
+    c.lua_pop(state, 1);
+    c.lua_pushinteger(state, s.getHitcount(side));
+    return 1;
+}
 
 // int get_ball_valid( lua_State* state )
 // {

@@ -220,6 +220,7 @@ fn checkWin(self: Self) ?PlayerSide {
             logger.err("error in IsWinning: {s}", .{error_string});
         }
         const won = c.lua_toboolean(self.sc.state, -1) != 0;
+        logger.info("checkWin {}", .{won});
         c.lua_pop(self.sc.state, 1);
         if (won) {
             if (self.scores[constants.player_left] > self.scores[constants.player_right]) {
@@ -239,11 +240,11 @@ fn checkWin(self: Self) ?PlayerSide {
 fn onBallHitsPlayerHandler(self: *Self, side: PlayerSide) void {
     self.updateLuaLogicState();
 
-    if (self.sc.getLuaFunction("OnGame")) {
+    if (self.sc.getLuaFunction("OnBallHitsPlayer")) {
         c.lua_pushnumber(self.sc.state, @floatFromInt(side.index()));
         if (c.lua_pcall(self.sc.state, 1, 0, 0) != 0) {
             const error_string = c.lua_tostring(self.sc.state, -1);
-            logger.err("error in OnGame: {s}", .{error_string});
+            logger.err("error in OnBallHitsPlayer: {s}", .{error_string});
         }
     } else {
         @panic("implement fallback for onBallHitsPlayerHandler");
