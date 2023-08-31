@@ -4,25 +4,38 @@
 <head>
   <meta charset="utf-8">
   <title>NanoVG Web Example</title>
-  <link rel="icon" href="data:,">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style type="text/css">
     body {
       margin: 0;
       overflow: hidden;
+      background-color: beige;
     }
     canvas {
       display: block;
+      image-rendering: crisp-edges;
+      position: absolute;
+    }
+    .center {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 10px;
     }
   </style>
 </head>
 
 <body>
-  <canvas id="canvasgl"></canvas>
+  <canvas id="canvasbg"></canvas>
+  <canvas id="canvasgl" class="center"></canvas>
   <script>
+    var $canvasbg = document.getElementById("canvasbg");
     var $canvasgl = document.getElementById("canvasgl");
   </script>
   <script src="js/wasm.js"></script>
   <script src="js/webgl.js"></script>
+  <script type="importmap"> { "imports": { "three": "/js/three/three.module.min.js", "three/addons/": "/js/three/addons/" } } </script>
+  <script type="module" src="/main.js"></script>
   <script>
     keys = [];
     const isKeyDown = function(key) {
@@ -35,16 +48,56 @@
       isKeyDown,
     }
 
+    function drawBG() {
+      const ctx = $canvasbg.getContext('2d');
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = '80px sans-serif';
+      const nrow = Math.ceil($canvasbg.height / 150);
+      const ncol = Math.ceil($canvasbg.width / 200) + 1;
+      ctx.globalAlpha = 0.2;
+      for (let row = 0; row < nrow; row++) {
+        for (let col = 0; col < ncol; col++) {
+          const x = col * 200 + row % 2 * 100;
+          const y = 75 + row * 150;
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(x + 11 * y);
+          ctx.fillText('🌴', 0, 0);
+          ctx.restore();
+        }
+      }
+    }
+
     fetchAndInstantiate('zig-out/lib/blobby.wasm', { env }).then(instance => {
       memory = instance.exports.memory;
       instance.exports.onInit();
+      window.initThreeJS();
 
       function resize() {
-        $canvasgl.width = window.devicePixelRatio * window.innerWidth;
-        $canvasgl.height = window.devicePixelRatio * window.innerHeight;
-        $canvasgl.style.width = window.innerWidth + "px";
-        $canvasgl.style.height = window.innerHeight + "px";
-        instance.exports.onResize(window.innerWidth, window.innerHeight, window.devicePixelRatio);
+        $canvasbg.width = window.devicePixelRatio * window.innerWidth;
+        $canvasbg.height = window.devicePixelRatio * window.innerHeight;
+        $canvasbg.style.width = window.innerWidth + "px";
+        $canvasbg.style.height = window.innerHeight + "px";
+        drawBG();
+
+        let width = 800;
+        let height = 600;
+        const sx = window.innerWidth / width;
+        const sy = window.innerHeight / height;
+        if (sx < sy) {
+          width *= sx;
+          height *= sx;
+        } else {
+          width *= sy;
+          height *= sy;
+        }
+        $canvasgl.width = window.devicePixelRatio * width;
+        $canvasgl.height = window.devicePixelRatio * height;
+        $canvasgl.style.width = width + "px";
+        $canvasgl.style.height = height + "px";
+        instance.exports.onResize(width, height, window.devicePixelRatio);
+        window.resizeThreeJS(width, height, window.devicePixelRatio);
       }
       window.addEventListener('resize', resize, false);
       resize();
@@ -64,6 +117,7 @@
       document.addEventListener('mousemove', e => instance.exports.onMouseMove(e.x, e.y));
 
       function step(timestamp) {
+        window.drawThreeJS();
         onAnimationFrame(timestamp);
         window.requestAnimationFrame(step);
       }

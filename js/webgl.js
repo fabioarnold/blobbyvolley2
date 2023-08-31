@@ -60,6 +60,12 @@ const glInitShader = (sourcePtr, sourceLen, type) => {
   return glShaders.length - 1;
 };
 const glLinkShaderProgram = (vertexShaderId, fragmentShaderId) => {
+  if (!gl.getShaderParameter(glShaders[vertexShaderId], gl.COMPILE_STATUS)) {
+    throw "Error compiling vertex shader:" + gl.getShaderInfoLog(glShaders[vertexShaderId]);
+  }
+  if (!gl.getShaderParameter(glShaders[fragmentShaderId], gl.COMPILE_STATUS)) {
+    throw "Error compiling fragment shader:" + gl.getShaderInfoLog(glShaders[fragmentShaderId]);
+  }
   const program = gl.createProgram();
   gl.attachShader(program, glShaders[vertexShaderId]);
   gl.attachShader(program, glShaders[fragmentShaderId]);
@@ -140,6 +146,7 @@ const glUniformMatrix4fv = (locationId, dataLen, transpose, dataPtr) => {
 };
 const glUniform1i = (locationId, x) => gl.uniform1i(glUniformLocations[locationId], x);
 const glUniform1f = (locationId, x) => gl.uniform1f(glUniformLocations[locationId], x);
+const glUniform2f = (locationId, x, y) => gl.uniform2f(glUniformLocations[locationId], x, y);
 const glUniform2fv = (locationId, count, value) => {
   let arr = new Float32Array(memory.buffer, value, count * 2);
   gl.uniform2fv(glUniformLocations[locationId], arr);
@@ -312,6 +319,7 @@ var webgl = {
   glUniformMatrix4fv,
   glUniform1i,
   glUniform1f,
+  glUniform2f,
   glUniform2fv,
   glCreateBuffer,
   glGenBuffers,
