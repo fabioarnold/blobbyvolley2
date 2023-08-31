@@ -14,11 +14,11 @@ pub fn init(allocator: std.mem.Allocator) void {
     objects = std.ArrayList(Object).init(allocator);
 }
 
-pub fn begin() void {
+pub fn clear() void {
     objects.clearRetainingCapacity();
 }
 
-pub fn end() void {
+pub fn render() void {
     for (objects.items) |object| {
         Renderer.drawText(object.text, object.x, object.y);
     }

@@ -27,5 +27,4 @@ pub fn step(self: *Self) void {
             self.winner = true;
         }
     }
-    Renderer.drawGame(self.match.getState());
 }

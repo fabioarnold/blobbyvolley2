@@ -12,6 +12,7 @@ const gl = @import("web/webgl.zig");
 const keys = @import("web/keys.zig");
 
 const LocalGameState = @import("state/LocalGameState.zig");
+const PhysicState = @import("PhysicState.zig");
 const Renderer = @import("Renderer.zig");
 const imgui = @import("imgui.zig");
 
@@ -33,6 +34,9 @@ var mx: f32 = 0;
 var my: f32 = 0;
 
 var game_state: LocalGameState = undefined;
+
+var menu: bool = true;
+var menu_alpha: f32 = 1;
 
 export fn onInit() void {
     global_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -69,6 +73,13 @@ export fn onMouseMove(x: i32, y: i32) void {
     my = @floatFromInt(y);
 }
 
+export fn onMouseClick(button: i32, x: i32, y: i32) void {
+    _ = button;
+    _ = x;
+    _ = y;
+    menu = !menu;
+}
+
 fn scaleToFit() void {
     const vg = Renderer.vg;
     const sx = video_width / game_width;
@@ -82,23 +93,67 @@ fn scaleToFit() void {
     }
 }
 
+fn getPhysicState() PhysicState {
+    return game_state.match.physic_world.getState();
+}
+
+export fn getBallX() f32 {
+    return getPhysicState().ball_position.x;
+}
+
+export fn getBallY() f32 {
+    return getPhysicState().ball_position.y;
+}
+
+export fn getBallRotation() f32 {
+    return getPhysicState().ball_rotation;
+}
+
+export fn getMenuAlpha() f32 {
+    return menu_alpha;
+}
+
+export fn step() void {
+    imgui.clear();
+
+    const a = @max(0, menu_alpha * 3 - 2);
+    const alpha = 1.0 - (1.0 - a) * (1.0 - a);
+
+    imgui.label("Blobby Volley 3", 260, alpha * 200 - 50);
+
+    imgui.label("Start Game", alpha * 400 - 300, 300);
+
+    if (menu) {
+        if (menu_alpha < 1) {
+            menu_alpha += 1.0 / 60.0;
+            if (menu_alpha > 1) {
+                menu_alpha = 1;
+            }
+        }
+    } else {
+        if (menu_alpha > 0) {
+            menu_alpha -= 1.0 / 60.0;
+            if (menu_alpha < 0) {
+                menu_alpha = 0;
+            }
+        }
+    }
+
+    game_state.step();
+}
+
 export fn onAnimationFrame() void {
-    const t = wasm.performanceNow() / 1000.0;
-    const dt = t - prevt;
-    prevt = t;
+    // const t = wasm.performanceNow() / 1000.0;
+    // const dt = t - prevt;
+    // prevt = t;
 
     const vg = Renderer.vg;
     vg.beginFrame(video_width, video_height, video_scale);
     scaleToFit();
 
-    imgui.begin();
+    Renderer.drawGame(game_state.match.getState(), menu_alpha == 0);
 
-    imgui.label("Blobby Volley 3", 260, 60);
-
-    _ = dt;
-    game_state.step();
-
-    imgui.end();
+    imgui.render();
 
     vg.endFrame();
 }

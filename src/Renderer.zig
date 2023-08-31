@@ -21,23 +21,25 @@ pub fn load() void {
     background_image = vg.createImageMem(@embedFile("../data/backgrounds/strand2.bmp"), .{});
 }
 
-pub fn drawGame(game_state: DuelMatchState) void {
-    drawImageColor(background_image, 0, 0, nvg.rgbaf(1, 1, 1, 0.2));
+pub fn drawGame(game_state: DuelMatchState, draw_blobs: bool) void {
+    // drawImageColor(background_image, 0, 0, nvg.rgbaf(1, 1, 1, 0.2));
 
     var pos = game_state.getBallPosition();
-    {
+    if (false) {
         vg.save();
         defer vg.restore();
         vg.translate(pos.x, pos.y);
         vg.rotate(game_state.getBallRotation());
-        drawImage(ball_image, -32, -32);
+        drawImageColor(ball_image, -32, -32, nvg.rgbaf(1, 1, 1, 0.5));
     }
 
-    pos = adjustBlobPosition(game_state.getBlobPosition(.left));
-    drawImageColor(blobby_image, pos.x, pos.y, nvg.rgbf(1, 1, 0));
+    if (draw_blobs) {
+        pos = adjustBlobPosition(game_state.getBlobPosition(.left));
+        drawImageColor(blobby_image, pos.x, pos.y, nvg.rgbf(1, 1, 0));
 
-    pos = adjustBlobPosition(game_state.getBlobPosition(.right));
-    drawImageColor(blobby_image, pos.x, pos.y, nvg.rgbf(0, 1, 1));
+        pos = adjustBlobPosition(game_state.getBlobPosition(.right));
+        drawImageColor(blobby_image, pos.x, pos.y, nvg.rgbf(0, 1, 1));
+    }
 }
 
 fn adjustBlobPosition(pos: Vec2) Vec2 {
