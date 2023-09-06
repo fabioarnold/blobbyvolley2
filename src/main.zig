@@ -119,9 +119,9 @@ export fn step() void {
     const a = @max(0, menu_alpha * 3 - 2);
     const alpha = 1.0 - (1.0 - a) * (1.0 - a);
 
-    imgui.label("Blobby Volley 3", 260, alpha * 200 - 50);
+    imgui.label("Blobby Volley 3D", 260, alpha * 200 - 50, .{});
 
-    imgui.label("Start Game", alpha * 400 - 300, 300);
+    imgui.label("Start Game", alpha * 400 - 300, 300, .{});
 
     if (menu) {
         if (menu_alpha < 1) {

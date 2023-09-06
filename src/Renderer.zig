@@ -65,7 +65,8 @@ fn drawImageColor(image: nvg.Image, x: f32, y: f32, color: nvg.Color) void {
     vg.fill();
 }
 
-pub fn drawText(text: []const u8, x: f32, y: f32) void {
+pub fn drawText(text: []const u8, x: f32, y: f32, alignment: nvg.TextAlign) void {
+    vg.textAlign(alignment);
     vg.fontFace("fredoka");
     vg.fontSize(32.0);
     vg.fillColor(nvg.rgb(0, 0, 0));
