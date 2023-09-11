@@ -8,7 +8,7 @@ let scene;
 let water;
 let ball = new THREE.Object3D();
 
-function initThreeJS() {
+async function initThreeJS() {
     renderer = new THREE.WebGLRenderer({ canvas: $canvasgl });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
@@ -46,11 +46,10 @@ function initThreeJS() {
     };
 
     const loader = new GLTFLoader();
-    loader.load("models/island.glb", (gltf) => {
-        gltf.scene.rotation.y = Math.PI;
-        enableShadows(gltf.scene);
-        scene.add(gltf.scene);
-    });
+    const island = await loader.loadAsync("models/island.glb");
+    island.scene.rotation.y = Math.PI;
+    enableShadows(island.scene);
+    scene.add(island.scene);
     const playfield = new THREE.Object3D();
     playfield.position.x = 8;
     playfield.position.y = 0.375;
@@ -58,39 +57,36 @@ function initThreeJS() {
     playfield.rotation.y = -Math.PI / 4;
     scene.add(playfield);
     playfield.add(ball);
-    loader.load("models/ball.glb", (gltf) => {
-        gltf.scene.scale.set(0.31, 0.31, 0.31);
-        enableShadows(gltf.scene);
-        ball.add(gltf.scene);
-    });
-    loader.load("models/net.glb", (gltf) => {
-        // gltf.scene.scale.set(4, 4, 4);
-        gltf.scene.rotation.y = Math.PI / 2;
-        gltf.scene.scale.set(1.02, 1.02, 1.02);
-        enableShadows(gltf.scene);
-        playfield.add(gltf.scene);
-    });
+    const ballModel = await loader.loadAsync("models/ball.glb");
+    ballModel.scene.scale.set(0.31, 0.31, 0.31);
+    enableShadows(ballModel.scene);
+    ball.add(ballModel.scene);
+    const net = await loader.loadAsync("models/net.glb");
+    net.scene.rotation.y = Math.PI / 2;
+    net.scene.scale.set(1.02, 1.02, 1.02);
+    enableShadows(net.scene);
+    playfield.add(net.scene);
 
     const waterGeometry = new THREE.PlaneGeometry(10000, 10000);
+    const waterNormals = await new THREE.TextureLoader().loadAsync("textures/waternormals.jpg");
     water = new Water(waterGeometry, {
         textureWidth: 512,
         textureHeight: 512,
-        waterNormals: new THREE.TextureLoader().load("textures/waternormals.jpg", function (texture) {
-            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-        }),
+        waterNormals: waterNormals,
         sunDirection: new THREE.Vector3(),
         sunColor: 0xffffff,
         waterColor: 0x001e0f,
         distortionScale: 2,
         fog: scene.fog !== undefined,
     });
+    waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
     water.rotation.x = -Math.PI / 2;
     water.material.uniforms["sunDirection"].value.set(0.70707, 0.70707, 0);
     scene.add(water);
 
-    scene.background = new THREE.CubeTextureLoader()
+    scene.background = await new THREE.CubeTextureLoader()
         .setPath("textures/skybox/")
-        .load(["px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png"]);
+        .loadAsync(["px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png"]);
 
     camera = new THREE.PerspectiveCamera(60, 4 / 3, 0.1, 1000);
     // camera.position.set(0, 3, 12);

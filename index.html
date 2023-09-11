@@ -32,9 +32,9 @@
       var $canvasgl = document.getElementById("canvasgl");
     </script>
     <script type="importmap">
-      { "imports": { "three": "/js/three/three.module.min.js", "three/addons/": "/js/three/addons/" } }
+      { "imports": { "three": "./js/three/three.module.min.js", "three/addons/": "./js/three/addons/" } }
     </script>
-    <script type="module" src="/main.js"></script>
+    <script type="module" src="./main.js"></script>
     <script type="module">
       import * as webgl from "./js/webgl.js";
       import * as wasm from "./js/wasm.js";
@@ -73,10 +73,10 @@
         }
       }
 
-      fetchAndInstantiate("zig-out/lib/blobby.wasm", { env }).then((instance) => {
+      fetchAndInstantiate("zig-out/lib/blobby.wasm", { env }).then(async (instance) => {
         window.memory = instance.exports.memory;
         instance.exports.onInit();
-        initThreeJS();
+        await initThreeJS();
 
         function resize() {
           $canvasbg.width = window.devicePixelRatio * window.innerWidth;
