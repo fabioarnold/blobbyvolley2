@@ -1,3 +1,5 @@
+import { readCharStr } from "./wasm.js";
+
 let webgl2Supported = typeof WebGL2RenderingContext !== "undefined";
 let webgl_fallback = false;
 let gl;
@@ -279,7 +281,7 @@ const glReadPixels = (x, y, w, h, format, type, pixels) => {
 };
 const glGetError = () => gl.getError();
 
-var webgl = {
+export {
   glInitShader,
   glLinkShaderProgram,
   glLoadTexture,

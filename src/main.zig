@@ -119,7 +119,7 @@ export fn step() void {
     const a = @max(0, menu_alpha * 3 - 2);
     const alpha = 1.0 - (1.0 - a) * (1.0 - a);
 
-    imgui.label("Blobby Volley 3D", 260, alpha * 200 - 50, .{});
+    imgui.label("Blobby Volley 3D", 400, alpha * 200 - 50, .{.horizontal = .center});
 
     imgui.label("Start Game", alpha * 400 - 300, 300, .{});
 
@@ -137,9 +137,8 @@ export fn step() void {
                 menu_alpha = 0;
             }
         }
+        game_state.step();
     }
-
-    game_state.step();
 }
 
 export fn onAnimationFrame() void {

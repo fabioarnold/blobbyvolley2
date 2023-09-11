@@ -2,18 +2,13 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { Water } from "three/addons/objects/Water.js";
 
-// make accessible from standard JS
-window.initThreeJS = initThreeJS;
-window.resizeThreeJS = resizeThreeJS;
-window.drawThreeJS = drawThreeJS;
-
 let renderer;
 let camera;
 let scene;
 let water;
 let ball = new THREE.Object3D();
 
-export function initThreeJS() {
+function initThreeJS() {
     renderer = new THREE.WebGLRenderer({ canvas: $canvasgl });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
@@ -103,7 +98,7 @@ export function initThreeJS() {
     camera.rotation.y = -Math.PI / 4;
 }
 
-export function resizeThreeJS(width, height, pixelRatio) {
+function resizeThreeJS(width, height, pixelRatio) {
     renderer.setSize(width, height);
     renderer.setPixelRatio(pixelRatio);
 }
@@ -121,7 +116,7 @@ function easeInOutQuad(t) {
 
 var cameraRotation = 0;
 
-export function drawThreeJS(gameState) {
+function drawThreeJS(gameState) {
     // camera.rotation.y = alpha;
     // camera.position.x = Math.sin(alpha) * 14;
     // camera.position.z = Math.cos(alpha) * 14;
@@ -159,4 +154,10 @@ export function drawThreeJS(gameState) {
     renderer.resetState();
     const gl = renderer.getContext();
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+}
+
+export {
+    initThreeJS,
+    resizeThreeJS,
+    drawThreeJS
 }

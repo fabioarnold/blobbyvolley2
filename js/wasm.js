@@ -45,7 +45,20 @@ const download = (filenamePtr, filenameLen, mimetypePtr, mimetypeLen, dataPtr, d
     document.body.removeChild(a);
 }
 
-var wasm = {
+
+const fmodf = (x, y) => x % y;
+const sinf = Math.sin;
+const cosf = Math.cos;
+const roundf = Math.round;
+const fabs = Math.abs;
+const abs = Math.abs;
+const sqrt = Math.sqrt;
+const expf = Math.exp;
+const pow = Math.pow;
+const ceil = Math.ceil;
+const ldexp = (x, exp) => x * Math.pow(2, exp);
+
+export {
     consoleLog,
     wasm_log_write,
     wasm_log_flush,
@@ -53,15 +66,15 @@ var wasm = {
     dateNow,
     download,
     readCharStr,
-    fmodf: (x, y) => x % y,
-    sinf: Math.sin,
-    cosf: Math.cos,
-    roundf: Math.round,
-    fabs: Math.abs,
-    abs: Math.abs,
-    sqrt: Math.sqrt,
-    expf: Math.exp,
-    pow: Math.pow,
-    ceil: Math.ceil,
-    ldexp: (x, exp) => x * Math.pow(2, exp),
+    fmodf,
+    sinf,
+    cosf,
+    roundf,
+    fabs,
+    abs,
+    sqrt,
+    expf,
+    pow,
+    ceil,
+    ldexp,
 }

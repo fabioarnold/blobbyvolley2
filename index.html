@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>NanoVG Web Example</title>
+    <title>Blobby Volley 3D</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <style type="text/css">
       body {
@@ -31,14 +31,16 @@
       var $canvasbg = document.getElementById("canvasbg");
       var $canvasgl = document.getElementById("canvasgl");
     </script>
-    <script src="js/wasm.js"></script>
-    <script src="js/webgl.js"></script>
     <script type="importmap">
       { "imports": { "three": "/js/three/three.module.min.js", "three/addons/": "/js/three/addons/" } }
     </script>
     <script type="module" src="/main.js"></script>
-    <script>
-      keys = [];
+    <script type="module">
+      import * as webgl from "./js/webgl.js";
+      import * as wasm from "./js/wasm.js";
+      import { initThreeJS, resizeThreeJS, drawThreeJS } from "./main.js";
+
+      const keys = [];
       const isKeyDown = function (key) {
         return keys[key];
       };
@@ -72,9 +74,9 @@
       }
 
       fetchAndInstantiate("zig-out/lib/blobby.wasm", { env }).then((instance) => {
-        memory = instance.exports.memory;
+        window.memory = instance.exports.memory;
         instance.exports.onInit();
-        window.initThreeJS();
+        initThreeJS();
 
         function resize() {
           $canvasbg.width = window.devicePixelRatio * window.innerWidth;
@@ -99,7 +101,7 @@
           $canvasgl.style.width = width + "px";
           $canvasgl.style.height = height + "px";
           instance.exports.onResize(width, height, window.devicePixelRatio);
-          window.resizeThreeJS(width, height, window.devicePixelRatio);
+          resizeThreeJS(width, height, window.devicePixelRatio);
         }
         window.addEventListener("resize", resize, false);
         resize();
@@ -121,7 +123,7 @@
 
         function step(timestamp) {
           instance.exports.step();
-          window.drawThreeJS({
+          drawThreeJS({
             ball: {
               x: instance.exports.getBallX(),
               y: instance.exports.getBallY(),
