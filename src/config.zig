@@ -1,1 +1,10 @@
+pub var left_script_name = "hyp014";
+pub var right_script_name = "reduced";
+pub var left_player_human = true;
+pub var right_player_human = true;
+pub var left_player_name = "Left Player";
+pub var right_player_name = "Right Player";
 pub var score_to_win: u32 = 15;
+pub var left_script_strength: i32 = 4;
+pub var right_script_strength: i32 = 13;
+pub var rules = "default.lua";

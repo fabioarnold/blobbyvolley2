@@ -3,6 +3,11 @@ const Self = @This();
 x: f32,
 y: f32,
 
+pub fn clear(self: *Self) void {
+    self.x = 0;
+    self.y = 0;
+}
+
 pub fn add(self: *Self, v: Self) void {
     self.x += v.x;
     self.y += v.y;

@@ -7,7 +7,7 @@ left_key: u32 = keys.KEY_LEFT,
 right_key: u32 = keys.KEY_RIGHT,
 up_key: u32 = keys.KEY_UP,
 
-pub fn updateInput(self: Self) PlayerInput {
+pub fn getNextInput(self: Self) PlayerInput {
     return .{
         .left = keys.isKeyDown(self.left_key),
         .right = keys.isKeyDown(self.right_key),

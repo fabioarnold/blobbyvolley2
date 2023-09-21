@@ -7,8 +7,9 @@ const PhysicWorld = @import("PhysicWorld.zig");
 const GameLogic = @import("GameLogic.zig");
 const DuelMatchState = @import("DuelMatchState.zig");
 const PlayerInput = @import("PlayerInput.zig");
-const InputSource = @import("InputSource.zig");
+const InputSource = @import("input.zig").InputSource;
 const MatchEvent = @import("MatchEvent.zig");
+const Vec2 = @import("Vec2.zig");
 
 const logger = std.log.scoped(.DuelMatch);
 
@@ -34,18 +35,16 @@ pub fn init(self: *Self, allocator: std.mem.Allocator, remote: bool) void {
     self.logic.init(@embedFile("../data/rules/default.lua"), config.score_to_win);
     self.physic_world.init();
 
-    self.input_sources[0] = InputSource{
-        .left_key = keys.KEY_A,
-        .right_key = keys.KEY_D,
-        .up_key = keys.KEY_W,
-    };
-    self.input_sources[1] = InputSource{};
-
     self.paused = false;
 
     if (!remote) {
         self.physic_world.setEventCallback(self, onMatchEvent);
     }
+}
+
+pub fn setInputSources(self: *Self, left: InputSource, right: InputSource) void {
+    self.input_sources[0] = left;
+    self.input_sources[1] = right;
 }
 
 fn onMatchEvent(self: *Self, event: MatchEvent) void {
@@ -55,8 +54,8 @@ fn onMatchEvent(self: *Self, event: MatchEvent) void {
 pub fn step(self: *Self) void {
     if (self.paused) return;
 
-    self.transformed_input[0] = self.input_sources[0].updateInput();
-    self.transformed_input[1] = self.input_sources[1].updateInput();
+    self.transformed_input[0] = self.input_sources[0].getNextInput();
+    self.transformed_input[1] = self.input_sources[1].getNextInput();
 
     if (self.remote) {
         @panic("TODO: implement transform input");
@@ -97,6 +96,18 @@ pub fn step(self: *Self) void {
     }
 
     self.events.clearRetainingCapacity();
+}
+
+pub fn getBallActive(self: Self) bool {
+    return self.logic.isGameRunning();
+}
+
+pub fn getServingPlayer(self: Self) ?PlayerSide {
+    return self.logic.serving_player;
+}
+
+pub fn getBallVelocity(self: Self) Vec2 {
+    return self.physic_world.ball_velocity;
 }
 
 pub fn getState(self: Self) DuelMatchState {

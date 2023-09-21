@@ -54,14 +54,14 @@ pub fn setGameConstants(self: Self) void {
 
 pub fn setGameFunctions(self: *Self) void {
     c.lua_register(self.state, "get_ball_pos", get_ball_pos);
-    // c.lua_register(self.state, "get_ball_vel", get_ball_vel);
-    // c.lua_register(self.state, "get_blob_pos", get_blob_pos);
-    // c.lua_register(self.state, "get_blob_vel", get_blob_vel);
-    // c.lua_register(self.state, "get_score", get_score);
+    c.lua_register(self.state, "get_ball_vel", get_ball_vel);
+    c.lua_register(self.state, "get_blob_pos", get_blob_pos);
+    c.lua_register(self.state, "get_blob_vel", get_blob_vel);
+    c.lua_register(self.state, "get_score", get_score);
     c.lua_register(self.state, "get_touches", get_touches);
-    // c.lua_register(self.state, "is_ball_valid", get_ball_valid);
-    // c.lua_register(self.state, "is_game_running", get_game_running);
-    // c.lua_register(self.state, "get_serving_player", get_serving_player);
+    c.lua_register(self.state, "is_ball_valid", get_ball_valid);
+    c.lua_register(self.state, "is_game_running", get_game_running);
+    c.lua_register(self.state, "get_serving_player", get_serving_player);
     // c.lua_register(self.state, "simulate", simulate_steps);
     // c.lua_register(self.state, "simulate_until", simulate_until);
 }
@@ -78,6 +78,12 @@ pub fn getLuaFunction(self: Self, name: []const u8) bool {
         return false;
     }
     return true;
+}
+
+pub fn callLuaFunction(self: Self, arg_count: i32) void {
+    if (c.lua_pcall(self.state, arg_count, 0, 0) != 0) {
+        logger.err("Lua Error: {s}", .{c.lua_tostring(self.state, -1)});
+    }
 }
 
 fn getScriptComponent(state: ?*c.lua_State) *Self {
@@ -115,38 +121,31 @@ fn get_ball_pos(state: ?*c.lua_State) callconv(.C) c_int {
     return lua_pushvector(state, getMatchState(state).getBallPosition(), .position);
 }
 
-// int get_ball_vel(lua_State* state)
-// {
-// 	return lua_pushvector(state, getMatchState(state).getBallVelocity(), VectorType::VELOCITY);
-// }
+fn get_ball_vel(state: ?*c.lua_State) callconv(.C) c_int {
+    return lua_pushvector(state, getMatchState(state).getBallVelocity(), .velocity);
+}
 
-// int get_blob_pos(lua_State* state)
-// {
-// 	const auto& s = getMatchState(state);
-// 	auto side = (PlayerSide) lua_to_int( state, -1 );
-// 	lua_pop(state, 1);
-// 	assert( side == LEFT_PLAYER || side == RIGHT_PLAYER );
-// 	return lua_pushvector(state, s.getBlobPosition(side), VectorType::POSITION);
-// }
+fn get_blob_pos(state: ?*c.lua_State) callconv(.C) c_int {
+    const s = getMatchState(state);
+    const side: PlayerSide = @enumFromInt(c.lua_to_int(state, -1));
+    c.lua_pop(state, 1);
+    return lua_pushvector(state, s.getBlobPosition(side), .position);
+}
 
-// int get_blob_vel(lua_State* state)
-// {
-// 	const auto& s = getMatchState(state);
-// 	PlayerSide side = (PlayerSide) lua_to_int( state, -1 );
-// 	lua_pop(state, 1);
-// 	assert( side == LEFT_PLAYER || side == RIGHT_PLAYER );
-// 	return lua_pushvector(state, s.getBlobVelocity(side), VectorType::VELOCITY);
-// }
+fn get_blob_vel(state: ?*c.lua_State) callconv(.C) c_int {
+    const s = getMatchState(state);
+    const side: PlayerSide = @enumFromInt(c.lua_to_int(state, -1));
+    c.lua_pop(state, 1);
+    return lua_pushvector(state, s.getBlobVelocity(side), .velocity);
+}
 
-// int get_score( lua_State* state )
-// {
-// 	const auto& s = getMatchState(state);
-// 	PlayerSide side = (PlayerSide) lua_to_int( state, -1 );
-// 	lua_pop(state, 1);
-// 	assert( side == LEFT_PLAYER || side == RIGHT_PLAYER );
-// 	lua_pushinteger(state, s.getScore(side));
-// 	return 1;
-// }
+fn get_score(state: ?*c.lua_State) callconv(.C) c_int {
+    const s = getMatchState(state);
+    const side: PlayerSide = @enumFromInt(c.lua_to_int(state, -1));
+    c.lua_pop(state, 1);
+    c.lua_pushinteger(state, s.getScore(side));
+    return 1;
+}
 
 fn get_touches(state: ?*c.lua_State) callconv(.C) c_int {
     const s = getMatchState(state);
@@ -157,26 +156,27 @@ fn get_touches(state: ?*c.lua_State) callconv(.C) c_int {
     return 1;
 }
 
-// int get_ball_valid( lua_State* state )
-// {
-// 	const auto& s = getMatchState(state);
-// 	lua_pushboolean(state, !s.getBallDown());
-// 	return 1;
-// }
+fn get_ball_valid(state: ?*c.lua_State) callconv(.C) c_int {
+    const s = getMatchState(state);
+    c.lua_pushboolean(state, @intFromBool(!s.getBallDown()));
+    return 1;
+}
 
-// int get_game_running( lua_State* state )
-// {
-// 	const auto& s = getMatchState(state);
-// 	lua_pushboolean(state, s.getBallActive());
-// 	return 1;
-// }
+fn get_game_running(state: ?*c.lua_State) callconv(.C) c_int {
+    const s = getMatchState(state);
+    c.lua_pushboolean(state, @intFromBool(s.getBallActive()));
+    return 1;
+}
 
-// int get_serving_player( lua_State* state )
-// {
-// 	const auto& s = getMatchState(state);
-// 	lua_pushinteger(state, s.getServingPlayer());
-// 	return 1;
-// }
+fn get_serving_player(state: ?*c.lua_State) callconv(.C) c_int {
+    const s = getMatchState(state);
+    if (s.getServingPlayer()) |serving_player| {
+        c.lua_pushinteger(state, serving_player.index());
+    } else {
+        c.lua_pushinteger(state, constants.player_none);
+    }
+    return 1;
+}
 
 // int simulate_steps( lua_State* state )
 // {
@@ -252,3 +252,11 @@ fn get_touches(state: ?*c.lua_State) callconv(.C) c_int {
 // 	ret += lua_pushvector(state, world->getBallVelocity(), VectorType::VELOCITY);
 // 	return ret;
 // }
+
+pub fn getCachedMatchState(self: Self) DuelMatchState {
+    return self.cached_state;
+}
+
+pub fn setCachedMatchState(self: *Self, state: DuelMatchState) void {
+    self.cached_state = state;
+}

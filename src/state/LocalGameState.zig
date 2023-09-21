@@ -2,6 +2,9 @@ const std = @import("std");
 const DuelMatch = @import("../DuelMatch.zig");
 const Renderer = @import("../Renderer.zig");
 const imgui = @import("../imgui.zig");
+const InputSource = @import("../input.zig").InputSource;
+const keys = @import("../web/keys.zig");
+const config = @import("../config.zig");
 
 const Self = @This();
 
@@ -14,6 +17,15 @@ pub fn init(self: *Self, allocator: std.mem.Allocator) void {
         .winner = false,
     };
     self.match.init(allocator, false);
+
+    var left_input = InputSource.initLocal();
+    left_input.local.left_key = keys.KEY_A;
+    left_input.local.right_key = keys.KEY_D;
+    left_input.local.up_key = keys.KEY_W;
+    const bot_script = @embedFile("../../data/scripts/reduced.lua");
+    const right_input = InputSource.initScripted(bot_script, .right, config.right_script_strength, &self.match);
+
+    self.match.setInputSources(left_input, right_input);
 }
 
 pub fn step(self: *Self) void {
