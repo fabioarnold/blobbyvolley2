@@ -6,6 +6,7 @@ const constants = @import("constants.zig");
 const PlayerSide = constants.PlayerSide;
 const Vec2 = @import("Vec2.zig");
 const DuelMatchState = @import("DuelMatchState.zig");
+const PhysicWorld = @import("PhysicWorld.zig");
 
 const Self = @This();
 
@@ -13,8 +14,12 @@ state: *c.lua_State,
 
 cached_state: DuelMatchState,
 
+dummy_world: PhysicWorld,
+
 pub fn init(self: *Self) void {
     self.state = c.luaL_newstate().?;
+
+    self.dummy_world.init();
 
     // register this in the lua registry
     _ = c.lua_pushliteral(self.state, "__C++_ScriptComponent__");
@@ -62,8 +67,8 @@ pub fn setGameFunctions(self: *Self) void {
     c.lua_register(self.state, "is_ball_valid", get_ball_valid);
     c.lua_register(self.state, "is_game_running", get_game_running);
     c.lua_register(self.state, "get_serving_player", get_serving_player);
-    // c.lua_register(self.state, "simulate", simulate_steps);
-    // c.lua_register(self.state, "simulate_until", simulate_until);
+    c.lua_register(self.state, "simulate", simulate_steps);
+    c.lua_register(self.state, "simulate_until", simulate_until);
 }
 
 fn setLuaGlobal(self: Self, name: []const u8, value: f64) void {
@@ -98,7 +103,11 @@ fn getMatchState(state: ?*c.lua_State) *DuelMatchState {
     const sc = getScriptComponent(state);
     return &sc.cached_state;
 }
-// inline PhysicWorld* getWorld( lua_State* s )  { return IScriptableComponent::Access::getWorld(s); }
+
+fn getWorld(state: ?*c.lua_State) *PhysicWorld {
+    const sc = getScriptComponent(state);
+    return &sc.dummy_world;
+}
 
 const VectorType = enum {
     position,
@@ -178,80 +187,77 @@ fn get_serving_player(state: ?*c.lua_State) callconv(.C) c_int {
     return 1;
 }
 
-// int simulate_steps( lua_State* state )
-// {
-// 	/// \todo should we gather and return all events that happen to the ball on the way?
-// 	PhysicWorld* world = getWorld( state );
-// 	// get the initial ball settings
-// 	lua_checkstack(state, 5);
-// 	int steps = lua_tointeger( state, 1);
-// 	float x = lua_tonumber( state, 2);
-// 	float y = lua_tonumber( state, 3);
-// 	float vx = lua_tonumber( state, 4);
-// 	float vy = lua_tonumber( state, 5);
-// 	lua_pop( state, 5);
+fn simulate_steps(state: ?*c.lua_State) callconv(.C) c_int {
+    // todo should we gather and return all events that happen to the ball on the way?
+    const world = getWorld(state);
+    // get the initial ball settings
+    _ = c.lua_checkstack(state, 5);
+    const steps = c.lua_tointeger(state, 1);
+    const x: f32 = @floatCast(c.lua_tonumber(state, 2));
+    const y: f32 = @floatCast(c.lua_tonumber(state, 3));
+    const vx: f32 = @floatCast(c.lua_tonumber(state, 4));
+    const vy: f32 = @floatCast(c.lua_tonumber(state, 5));
+    c.lua_pop(state, 5);
 
-// 	world->setBallPosition( Vector2{x, 600 - y} );
-// 	world->setBallVelocity( Vector2{vx, -vy});
-// 	for(int i = 0; i < steps; ++i)
-// 	{
-// 		// set ball valid to false to ignore blobby bounces
-// 		world->step(PlayerInput(), PlayerInput(), false, true);
-// 	}
+    world.ball_position = .{ .x = x, .y = 600 - y };
+    world.ball_velocity = .{ .x = vx, .y = -vy };
+    var i: usize = 0;
+    while (i < steps) : (i += 1) {
+        // set ball valid to false to ignore blobby bounces
+        world.step(.{}, .{}, false, true);
+    }
 
-// 	int ret = lua_pushvector(state, world->getBallPosition(), VectorType::POSITION);
-// 	ret += lua_pushvector(state, world->getBallVelocity(), VectorType::VELOCITY);
-// 	return ret;
-// }
+    var ret = lua_pushvector(state, world.ball_position, .position);
+    ret += lua_pushvector(state, world.ball_velocity, .velocity);
+    return ret;
+}
 
-// int simulate_until(lua_State* state)
-// {
-// 	/// \todo should we gather and return all events that happen to the ball on the way?
-// 	PhysicWorld* world = getWorld( state );
-// 	// get the initial ball settings
-// 	lua_checkstack(state, 6);
-// 	float x = lua_tonumber( state, 1);
-// 	float y = lua_tonumber( state, 2);
-// 	float vx = lua_tonumber( state, 3);
-// 	float vy = lua_tonumber( state, 4);
-// 	std::string axis = lua_tostring( state, 5 );
-// 	const float coordinate = lua_tonumber( state, 6 );
-// 	lua_pop( state, 6 );
+fn simulate_until(state: ?*c.lua_State) callconv(.C) c_int {
+    // todo should we gather and return all events that happen to the ball on the way?
+    const world = getWorld(state);
+    // get the initial ball settings
+    _ = c.lua_checkstack(state, 6);
+    const x: f32 = @floatCast(c.lua_tonumber(state, 1));
+    const y: f32 = @floatCast(c.lua_tonumber(state, 2));
+    const vx: f32 = @floatCast(c.lua_tonumber(state, 3));
+    const vy: f32 = @floatCast(c.lua_tonumber(state, 4));
+    const axis = c.lua_tostring(state, 5);
+    const coordinate: f32 = @floatCast(c.lua_tonumber(state, 6));
+    c.lua_pop(state, 6);
 
-// 	const float ival = axis == "x" ? x : y;
-// 	if(axis != "x" && axis != "y")
-// 	{
-// 		lua_pushstring(state, "invalid condition specified: choose either 'x' or 'y'");
-// 		lua_error(state);
-// 	}
-// 	const bool init = ival < coordinate;
+    const ival = if (axis[0] == 'x') x else y;
+    // if(axis != "x" && axis != "y")
+    // {
+    // 	lua_pushstring(state, "invalid condition specified: choose either 'x' or 'y'");
+    // 	lua_error(state);
+    // }
+    const left = ival < coordinate;
 
-// 	// set up the world
-// 	world->setBallPosition( Vector2{x, 600 - y} );
-// 	world->setBallVelocity( Vector2{vx, -vy});
+    // set up the world
+    world.ball_position = .{ .x = x, .y = 600 - y };
+    world.ball_velocity = .{ .x = vx, .y = -vy };
 
-// 	int steps = 0;
-// 	while(coordinate != ival && steps < 75 * 5)
-// 	{
-// 		steps++;
-// 		// set ball valid to false to ignore blobby bounces
-// 		world->step(PlayerInput(), PlayerInput(), false, true);
-// 		// check for the condition
-// 		auto pos = world->getBallPosition();
-// 		float v = axis == "x" ? pos.x : 600 - pos.y;
-// 		if( (v < coordinate) != init )
-// 			break;
-// 	}
-// 	// indicate failure
-// 	if(steps == 75 * 5)
-// 		steps = -1;
+    var steps: i32 = 0;
+    while (coordinate != ival and steps < 75 * 5) {
+        steps += 1;
+        // set ball valid to false to ignore blobby bounces
+        world.step(.{}, .{}, false, true);
+        // check for the condition
+        const pos = world.ball_position;
+        const v = if (axis[0] == 'x') pos.x else 600 - pos.y;
+        if ((v < coordinate) != left)
+            break;
+    }
+    // indicate failure
+    if (steps == 75 * 5)
+        steps = -1;
 
-// 	lua_pushinteger(state, steps);
-// 	int ret = 1;
-// 	ret += lua_pushvector(state, world->getBallPosition(), VectorType::POSITION);
-// 	ret += lua_pushvector(state, world->getBallVelocity(), VectorType::VELOCITY);
-// 	return ret;
-// }
+    c.lua_pushinteger(state, steps);
+    var ret: c_int = 1;
+    ret += lua_pushvector(state, world.ball_position, .position);
+    ret += lua_pushvector(state, world.ball_velocity, .velocity);
+    return ret;
+}
 
 pub fn getCachedMatchState(self: Self) DuelMatchState {
     return self.cached_state;
