@@ -16,12 +16,13 @@ pub const InputSource = union(InputSourceType) {
     local: LocalInputSource,
     scripted: ScriptedInputSource,
 
-    pub fn initLocal() Self {
-        return .{ .local = .{} };
+    pub fn initLocal(self: *Self) void {
+        self.* = .{ .local = .{} };
     }
 
-    pub fn initScripted(script: []const u8, side: PlayerSide, difficulty: i32, match: *DuelMatch) Self {
-        return .{ .scripted = ScriptedInputSource.init(script, side, difficulty, match) };
+    pub fn initScripted(self: *Self, script: []const u8, side: PlayerSide, difficulty: i32, match: *DuelMatch) void {
+        self.* = .{ .scripted = undefined };
+        self.scripted.init(script, side, difficulty, match);
     }
 
     pub fn getNextInput(self: *Self) PlayerInput {

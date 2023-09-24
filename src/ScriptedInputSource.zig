@@ -40,8 +40,8 @@ match: *DuelMatch,
 
 sc: ScriptableComponent,
 
-pub fn init(script: []const u8, side: PlayerSide, difficulty: i32, match: *DuelMatch) Self {
-    var self: Self = .{
+pub fn init(self: *Self, script: []const u8, side: PlayerSide, difficulty: i32, match: *DuelMatch) void {
+    self.* = .{
         .sc = undefined,
         .side = side,
         .difficulty = difficulty,
@@ -81,8 +81,6 @@ pub fn init(script: []const u8, side: PlayerSide, difficulty: i32, match: *DuelM
 
     // clean up stack
     c.lua_pop(self.sc.state, c.lua_gettop(self.sc.state));
-
-    return self;
 }
 
 pub fn getNextInput(self: *Self) PlayerInput {

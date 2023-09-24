@@ -18,14 +18,7 @@ pub fn init(self: *Self, allocator: std.mem.Allocator) void {
     };
     self.match.init(allocator, false);
 
-    var left_input = InputSource.initLocal();
-    left_input.local.left_key = keys.KEY_A;
-    left_input.local.right_key = keys.KEY_D;
-    left_input.local.up_key = keys.KEY_W;
-    const bot_script = @embedFile("../../data/scripts/reduced.lua");
-    const right_input = InputSource.initScripted(bot_script, .right, config.right_script_strength, &self.match);
-
-    self.match.setInputSources(left_input, right_input);
+    self.match.setInputSources();
 }
 
 pub fn step(self: *Self) void {

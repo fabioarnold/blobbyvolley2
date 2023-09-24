@@ -42,9 +42,14 @@ pub fn init(self: *Self, allocator: std.mem.Allocator, remote: bool) void {
     }
 }
 
-pub fn setInputSources(self: *Self, left: InputSource, right: InputSource) void {
-    self.input_sources[0] = left;
-    self.input_sources[1] = right;
+pub fn setInputSources(self: *Self) void {
+    self.input_sources[0].initLocal();
+    self.input_sources[0].local.left_key = keys.KEY_A;
+    self.input_sources[0].local.right_key = keys.KEY_D;
+    self.input_sources[0].local.up_key = keys.KEY_W;
+
+    const bot_script = @embedFile("../data/scripts/reduced.lua");
+    self.input_sources[1].initScripted(bot_script, .right, config.right_script_strength, self);
 }
 
 fn onMatchEvent(self: *Self, event: MatchEvent) void {
