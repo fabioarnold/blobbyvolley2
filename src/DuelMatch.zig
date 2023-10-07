@@ -107,12 +107,19 @@ pub fn getBallActive(self: Self) bool {
     return self.logic.isGameRunning();
 }
 
+pub fn getBallVelocity(self: Self) Vec2 {
+    return self.physic_world.ball_velocity;
+}
+
 pub fn getServingPlayer(self: Self) ?PlayerSide {
     return self.logic.serving_player;
 }
 
-pub fn getBallVelocity(self: Self) Vec2 {
-    return self.physic_world.ball_velocity;
+pub fn setState(self: *Self, state: DuelMatchState) void {
+    self.physic_world.setState(state.world_state);
+    self.logic.setState(state.logic_state);
+    self.transformed_input = state.player_input;
+    // TODO: input source setInput?
 }
 
 pub fn getState(self: Self) DuelMatchState {

@@ -220,7 +220,6 @@ fn checkWin(self: Self) ?PlayerSide {
             logger.err("error in IsWinning: {s}", .{error_string});
         }
         const won = c.lua_toboolean(self.sc.state, -1) != 0;
-        logger.info("checkWin {}", .{won});
         c.lua_pop(self.sc.state, 1);
         if (won) {
             if (self.scores[constants.player_left] > self.scores[constants.player_right]) {

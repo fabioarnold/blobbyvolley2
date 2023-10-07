@@ -115,10 +115,10 @@ const VectorType = enum {
 };
 
 fn lua_pushvector(state: ?*c.lua_State, v: Vec2, vector_type: VectorType) c_int {
-    if (vector_type == .position) {
+    if (vector_type == .velocity) {
         c.lua_pushnumber(state, v.x);
         c.lua_pushnumber(state, -v.y);
-    } else if (vector_type == .velocity) {
+    } else if (vector_type == .position) {
         c.lua_pushnumber(state, v.x);
         c.lua_pushnumber(state, 600 - v.y);
     }
@@ -159,7 +159,6 @@ fn get_score(state: ?*c.lua_State) callconv(.C) c_int {
 fn get_touches(state: ?*c.lua_State) callconv(.C) c_int {
     const s = getMatchState(state);
     const side: PlayerSide = @enumFromInt(c.lua_to_int(state, -1));
-    logger.info("get_touches: {}", .{side});
     c.lua_pop(state, 1);
     c.lua_pushinteger(state, s.getHitcount(side));
     return 1;
