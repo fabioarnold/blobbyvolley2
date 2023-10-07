@@ -43,7 +43,7 @@ pub fn getBlobVelocity(self: Self, player: PlayerSide) Vec2 {
 }
 
 pub fn getBallDown(self: Self) bool {
-    return self.logic_state.is_ball_valid;
+    return !self.logic_state.is_ball_valid;
 }
 
 pub fn getBallActive(self: Self) bool {
