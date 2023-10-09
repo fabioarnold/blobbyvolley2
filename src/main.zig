@@ -30,8 +30,6 @@ var gpa: std.heap.GeneralPurposeAllocator(.{
 var allocator: std.mem.Allocator = undefined;
 
 var prevt: f32 = 0;
-var mx: f32 = 0;
-var my: f32 = 0;
 
 var game_state: LocalGameState = undefined;
 
@@ -68,16 +66,15 @@ export fn onKeyDown(key: c_uint) void {
     _ = key;
 }
 
-export fn onMouseMove(x: i32, y: i32) void {
-    mx = @floatFromInt(x);
-    my = @floatFromInt(y);
+export fn onMouseMove(x: f32, y: f32) void {
+    imgui.mouse_x = x;
+    imgui.mouse_y = y;
 }
 
-export fn onMouseClick(button: i32, x: i32, y: i32) void {
-    _ = button;
-    _ = x;
-    _ = y;
-    menu = !menu;
+export fn onMouseClick(button: i32) void {
+    if (button == 0) {
+        imgui.click = true;
+    }
 }
 
 fn scaleToFit() void {
@@ -119,9 +116,15 @@ export fn step() void {
     const a = @max(0, menu_alpha * 3 - 2);
     const alpha = 1.0 - (1.0 - a) * (1.0 - a);
 
-    imgui.label("Blobby Volley 3D", 400, alpha * 200 - 50, .{.horizontal = .center});
+    imgui.label("Blobby Volley 3D", 400, alpha * 200 - 50, .{ .horizontal = .center });
 
-    imgui.label("Start Game", alpha * 400 - 300, 300, .{});
+    if (imgui.button("Vs Player", alpha * 400 - 300, 300, .{})) {
+        menu = false;
+    }
+
+    if (imgui.button("Vs Bot", alpha * 400 - 300, 400, .{})) {
+        menu = false;
+    }
 
     if (menu) {
         if (menu_alpha < 1) {
@@ -153,6 +156,7 @@ export fn onAnimationFrame() void {
     Renderer.drawGame(game_state.match.getState(), menu_alpha == 0);
 
     imgui.render();
+    imgui.click = false;
 
     vg.endFrame();
 }

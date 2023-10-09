@@ -1,4 +1,5 @@
 const std = @import("std");
+const logger = std.log.scoped(.Renderer);
 const nvg = @import("nanovg");
 
 const Vec2 = @import("Vec2.zig");
@@ -75,4 +76,20 @@ pub fn drawText(text: []const u8, x: f32, y: f32, alignment: nvg.TextAlign) void
     vg.fontBlur(0);
     vg.fillColor(nvg.rgbf(1, 1, 1));
     _ = vg.text(x, y, text);
+}
+
+pub fn pointInText(
+    point_x: f32,
+    point_y: f32,
+    text: []const u8,
+    text_x: f32,
+    text_y: f32,
+    alignment: nvg.TextAlign,
+) bool {
+    vg.textAlign(alignment);
+    vg.fontFace("fredoka");
+    vg.fontSize(32.0);
+    var bounds: [4]f32 = undefined;
+    _ = vg.textBounds(text_x, text_y, text, &bounds);
+    return point_x >= bounds[0] and point_y >= bounds[1] and point_x <= bounds[2] and point_y <= bounds[3];
 }

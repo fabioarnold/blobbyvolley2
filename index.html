@@ -116,10 +116,13 @@
           keys[e.keyCode] = false;
           // instance.exports.onKeyUp(e.keyCode);
         });
-        document.addEventListener("click", (e) => instance.exports.onMouseClick(e.button, e.x, e.y));
-        // document.addEventListener('mousedown', e => instance.exports.onMouseDown(e.button, e.x, e.y));
-        // document.addEventListener('mouseup', e => instance.exports.onMouseUp(e.button, e.x, e.y));
-        document.addEventListener("mousemove", (e) => instance.exports.onMouseMove(e.x, e.y));
+        document.addEventListener("click", (e) => instance.exports.onMouseClick(e.button));
+        $canvasgl.addEventListener("mousemove", (e) => {
+          instance.exports.onMouseMove(
+            (e.offsetX * 800) / ($canvasgl.width / window.devicePixelRatio),
+            (e.offsetY * 600) / ($canvasgl.height / window.devicePixelRatio)
+          );
+        });
 
         function step(timestamp) {
           instance.exports.step();

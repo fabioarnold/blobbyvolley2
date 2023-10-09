@@ -4,12 +4,22 @@ const nvg = @import("nanovg");
 
 const Renderer = @import("Renderer.zig");
 
+const ObjectType = enum {
+    label,
+    button,
+};
+
 const Object = struct {
+    obj_type: ObjectType,
     text: []const u8,
     x: f32,
     y: f32,
     alignment: nvg.TextAlign,
 };
+
+pub var mouse_x: f32 = 0;
+pub var mouse_y: f32 = 0;
+pub var click: bool = false;
 
 var objects: std.ArrayList(Object) = undefined;
 
@@ -29,6 +39,7 @@ pub fn render() void {
 
 pub fn label(text: []const u8, x: f32, y: f32, alignment: nvg.TextAlign) void {
     objects.append(.{
+        .obj_type = .label,
         .text = text,
         .x = x,
         .y = y,
@@ -36,6 +47,13 @@ pub fn label(text: []const u8, x: f32, y: f32, alignment: nvg.TextAlign) void {
     }) catch unreachable;
 }
 
-pub fn button() bool {
-    return false;
+pub fn button(text: []const u8, x: f32, y: f32, alignment: nvg.TextAlign) bool {
+    objects.append(.{
+        .obj_type = .button,
+        .text = text,
+        .x = x,
+        .y = y,
+        .alignment = alignment,
+    }) catch unreachable;
+    return click and Renderer.pointInText(mouse_x, mouse_y, text, x, y, alignment);
 }
